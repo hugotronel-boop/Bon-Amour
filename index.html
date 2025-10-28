@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carnet de Bons</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* Styles communs */
+html, body { 
+  margin:0; padding:0; font-family:'Inter',sans-serif; 
+  background:#111; color:#fff; overflow:hidden; height:100vh;
+}
+
+h1 {
+  font-family: 'Fredoka One', cursive;
+  font-size:3em;
+  margin:0;
+  color:#ff6f91;
+}
+
+.subtitle {
+  font-size:1em;
+  color:#bbb;
+  margin-bottom:20px;
+}
+
+/* Page d'accueil */
+#accueil {
+  display:flex; 
+  flex-direction:column; 
+  align-items:center; 
+  justify-content:flex-start; 
+  padding-top:40px;
+  height:100vh;
+  width:100vw;
+}
+
+.carousel { 
+  overflow:hidden; 
+  width:100vw; 
+  height:50vh; 
+  touch-action: pan-x; 
+  margin-top: 40px; 
+}
+.carousel-track { display:flex; height:100%; }
+
+.carousel-item {
+  flex:0 0 85vw; 
+  height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:2em;
+  font-weight:700;
+  text-align:center;
+  color:#fff;
+  border-radius:24px;
+  margin:0 10px;
+  background: linear-gradient(135deg,#ff9a8b,#ff6f91);
+  backdrop-filter: blur(8px);
+  box-shadow:0 10px 25px rgba(0,0,0,0.35);
+  user-select:none;
+  padding:20px;
+  cursor:pointer;
+  transition: transform 0.15s ease;
+}
+.carousel-item:nth-child(2){ background: linear-gradient(135deg,#ff6f91,#ff3f5e); }
+.carousel-item:nth-child(3){ background: linear-gradient(135deg,#ffd6a5,#ffb347); }
+.carousel-item:nth-child(4){ background: linear-gradient(135deg,#85e3ff,#5ec9ff); }
+
+.carousel-item:active {
+  transform: scale(1.1);
+}
+
+/* Styles pour les pages de bons */
+.page-bons {
+  display:none;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  width:100vw;
+  position:fixed;
+  top:0;
+  left:0;
+  z-index:10;
+}
+
+.book-container {
+  width:90%;
+  max-width:420px;
+  background:#111;
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.5);
+  padding:25px;
+  display:flex;
+  flex-direction:column;
+  height:90vh;
+  overflow:hidden;
+  position:relative;
+}
+
+.page-title {
+  font-family:'Fredoka One', cursive;
+  font-size:2.3em;
+  text-align:center;
+  margin:0;
+}
+
+.page-subtitle {
+  font-size:0.95em;
+  text-align:center;
+  color:#bbb;
+  margin-bottom:10px;
+}
+
+.counter {
+  text-align:center;
+  font-size:0.9em;
+  margin-bottom:10px;
+}
+
+.page-content {
+  flex:1;
+  overflow-y:auto;
+  margin-top:10px;
+  padding-right:5px;
+}
+
+ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+}
+
+li {
+  border-radius:18px;
+  padding:15px;
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  transition:transform 0.25s ease, box-shadow 0.25s ease;
+  cursor:pointer;
+}
+
+li:active {
+  transform: scale(0.97);
+}
+
+li:hover {
+  transform:scale(1.02);
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+}
+
+input[type="checkbox"] {
+  transform:scale(1.3);
+  cursor:pointer;
+  accent-color:#fff;
+}
+
+label {
+  flex:1;
+  font-size:1em;
+  color:#fff;
+}
+
+.used {
+  text-decoration:line-through;
+  opacity:0.6;
+}
+
+.back-btn {
+  text-align:center;
+  background:#222;
+  padding:10px 15px;
+  border-radius:12px;
+  text-decoration:none;
+  color:#fff;
+  font-weight:600;
+  transition: background 0.3s;
+  margin-top:10px;
+  cursor:pointer;
+}
+
+.back-btn:hover {
+  background:#333;
+}
+
+/* Scroll bar custom */
+::-webkit-scrollbar {
+  width:6px;
+}
+::-webkit-scrollbar-thumb {
+  background:#555;
+  border-radius:3px;
+}
+
+/* Cœurs qui s'envolent */
+.heart {
+  position: absolute;
+  color: #ff7b89;
+  font-size: 1.5em;
+  animation: floatUp 1.5s ease-out forwards;
+  pointer-events: none;
+  z-index: 100;
+}
+@keyframes floatUp {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+}
+
+/* Message secret */
+.secret-message {
+  display: none;
+  font-size: 1.1em;
+  color: #fff;
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 20px;
+  animation: popIn 0.8s ease;
+  text-align:center;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Styles spécifiques pour chaque page de bons */
+#bons-mignons {
+  background: linear-gradient(135deg,#1a1a1a,#0d0d0d,#1a1a1a);
+  background-size: 300% 300%;
+  animation: bgMove 8s ease infinite;
+}
+
+#bons-mignons .page-title {
+  color:#ff6f91;
+}
+
+#bons-mignons .counter {
+  color:#ff9a8b;
+}
+
+#bons-mignons li {
+  background: linear-gradient(135deg,#ff9a8b,#ff6f91);
+}
+
+#bons-mignons .secret-message {
+  background: linear-gradient(135deg,#ff9a8b,#ff6f91);
+}
+
+#bons-coquins {
+  background: linear-gradient(135deg,#1a1a1a,#0d0d0d,#1a1a1a);
+  background-size: 300% 300%;
+  animation: bgMove 8s ease infinite;
+}
+
+#bons-coquins .page-title {
+  color:#ff3f5e;
+}
+
+#bons-coquins .counter {
+  color:#ff6f91;
+}
+
+#bons-coquins li {
+  background: linear-gradient(135deg,#ff6f91,#ff3f5e);
+}
+
+#bons-coquins .secret-message {
+  background: linear-gradient(135deg,#ff6f91,#ff3f5e);
+}
+
+#bons-rigolos {
+  background: linear-gradient(135deg,#1a1a1a,#0d0d0d,#1a1a1a);
+  background-size: 300% 300%;
+  animation: bgMove 8s ease infinite;
+}
+
+#bons-rigolos .page-title {
+  color:#85e3ff;
+}
+
+#bons-rigolos .counter {
+  color:#5ec9ff;
+}
+
+#bons-rigolos li {
+  background: linear-gradient(135deg,#85e3ff,#5ec9ff);
+}
+
+#bons-rigolos .secret-message {
+  background: linear-gradient(135deg,#85e3ff,#5ec9ff);
+}
+
+#bons-detente {
+  background: linear-gradient(135deg,#a8edea,#fed6e3,#a8edea);
+  background-size: 300% 300%;
+  animation: bgMove 8s ease infinite;
+}
+
+#bons-detente .page-title {
+  color:#00d2ff;
+}
+
+#bons-detente .counter {
+  color:#66f0ff;
+}
+
+#bons-detente li {
+  background: linear-gradient(135deg,#00c6ff,#0072ff);
+}
+
+#bons-detente .secret-message {
+  background: linear-gradient(135deg,#00c6ff,#0072ff);
+}
+
+@keyframes bgMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+</style>
+</head>
+<body>
+
+<!-- Page d'accueil -->
+<div id="accueil">
+  <h1>Carnet de Bons</h1>
+  <div class="subtitle">Valable 1 an à partir d'aujourd'hui 💌</div>
+
+  <div class="carousel">
+    <div class="carousel-track" id="track">
+      <div class="carousel-item" data-page="bons-mignons">💖 Bons Mignons / Romantiques</div>
+      <div class="carousel-item" data-page="bons-coquins">🔥 Bons Coquins</div>
+      <div class="carousel-item" data-page="bons-rigolos">😂 Bons Rigolos / Délires</div>
+      <div class="carousel-item" data-page="bons-detente">🧘‍♀️ Bons Détente / Bien-être</div>
+      <div class="carousel-item" data-page="bons-mignons">💖 Bons Mignons / Romantiques</div>
+      <div class="carousel-item" data-page="bons-coquins">🔥 Bons Coquins</div>
+      <div class="carousel-item" data-page="bons-rigolos">😂 Bons Rigolos / Délires</div>
+      <div class="carousel-item" data-page="bons-detente">🧘‍♀️ Bons Détente / Bien-être</div>
+    </div>
+  </div>
+</div>
+
+<!-- Pages de bons (cachées au départ) -->
+<div id="bons-mignons" class="page-bons">
+  <div class="book-container">
+    <h1 class="page-title">💖 Bons Mignons</h1>
+    <p class="page-subtitle">Des petits gestes remplis d'amour rien que pour toi 🫶</p>
+    <div class="counter" id="counter-mignons"></div>
+
+    <div class="page-content">
+      <ul id="bonsList-mignons"></ul>
+      <div class="secret-message" id="secretMessage-mignons">🎉 T'as utilisé tous les bons mignons 💕<br>Mais t'as encore tout mon cœur 🥰</div>
+    </div>
+
+    <div class="back-btn" data-back="accueil">Retour</div>
+  </div>
+</div>
+
+<div id="bons-coquins" class="page-bons">
+  <div class="book-container">
+    <h1 class="page-title">🔥 Bons Coquins</h1>
+    <p class="page-subtitle">Des petits plaisirs coquins rien que pour toi 😏</p>
+    <div class="counter" id="counter-coquins"></div>
+
+    <div class="page-content">
+      <ul id="bonsList-coquins"></ul>
+      <div class="secret-message" id="secretMessage-coquins">🎉 T'as utilisé tous les bons coquins 😈<br>Mais t'as encore tout mon cœur 🥰</div>
+    </div>
+
+    <div class="back-btn" data-back="accueil">Retour</div>
+  </div>
+</div>
+
+<div id="bons-rigolos" class="page-bons">
+  <div class="book-container">
+    <h1 class="page-title">😂 Bons Rigolos</h1>
+    <p class="page-subtitle">Des moments de folie rien que pour toi 😝</p>
+    <div class="counter" id="counter-rigolos"></div>
+
+    <div class="page-content">
+      <ul id="bonsList-rigolos"></ul>
+      <div class="secret-message" id="secretMessage-rigolos">🎉 T'as utilisé tous les bons rigolos 🤪<br>Mais t'as encore tout mon cœur 🥰</div>
+    </div>
+
+    <div class="back-btn" data-back="accueil">Retour</div>
+  </div>
+</div>
+
+<div id="bons-detente" class="page-bons">
+  <div class="book-container">
+    <h1 class="page-title">🧘‍♀️ Bons Détente</h1>
+    <p class="page-subtitle">Des moments zen rien que pour toi 🌿</p>
+    <div class="counter" id="counter-detente"></div>
+
+    <div class="page-content">
+      <ul id="bonsList-detente"></ul>
+      <div class="secret-message" id="secretMessage-detente">🎉 T'as utilisé tous les bons détente 😌<br>Mais t'as encore tout mon cœur 🥰</div>
+    </div>
+
+    <div class="back-btn" data-back="accueil">Retour</div>
+  </div>
+</div>
+
+<script>
+// Données pour chaque type de bons
+const bonsData = {
+  "bons-mignons": {
+    bons: [
+      "Bon pour un câlin illimité.",
+      "Bon pour un petit-déjeuner au lit.",
+      "Bon pour une soirée film dans tes bras.",
+      "Bon pour un mot doux par jour pendant une semaine.",
+      "Bon pour une promenade main dans la main.",
+      "Bon pour un 'je t'aime' chuchoté à l'oreille.",
+      "Bon pour une surprise romantique.",
+      "Bon pour une journée activité.",
+      "Bon pour un baiser volé où tu veux.",
+      "Bon pour un dîner amoureux qui dure un peu trop longtemps.",
+      "Bon pour une photo souvenir à deux.",
+      "Bon pour une séance photo spécial TOI.",
+      "Bon pour un dîner maison préparé par moi.",
+      "Bon pour te redire pourquoi je t'aime (en 10 raisons minimum ❤️).",
+      "Bon pour une lettre d'amour manuscrite.",
+      "Bon pour une soirée sans téléphone, juste nous.",
+      "Bon pour un 'tu choisis tout' pendant 24h.",
+      "Bon pour un message surprise dans la journée.",
+      "Bon pour un YES DAYS.",
+      "Bon pour un câlin dès que tu le réclames. (Durée 24h)"
+    ]
+  },
+  "bons-coquins": {
+    bons: [
+      "Bon pour un massage sensuel.",
+      "Bon pour une douche à deux ou se laver ne sera pas la principale activité (attention à pas glisser 😏).",
+      "Bon pour un strip-tease improvisé.",
+      "Bon pour un baiser de 5 minutes chrono (et sans triche).",
+      "Bon pour une soirée lingerie et tentation.",
+      "Bon pour que je réalise ton fantasme préféré.",
+      "Bon pour une nuit où c'est toi le boss.",
+      "Bon pour un 'jeu de rôle' surprise.",
+      "Bon pour un gage coquin.",
+      "Bon pour une séance de bisous dans le cou.",
+      "Bon pour une nuit sans limite.",
+      "Bon pour un câlin sous la couette un peu trop long.",
+      "Bon pour te réveiller avec des baisers partout.",
+      "Bon pour un défi sexy à relever.",
+      "Bon pour une soirée 'interdite aux habits'.",
+      "Bon pour un moment câlin improvisé.",
+      "Bon pour un 'je m'occupe de toi'.",
+      "Bon pour un massage du dos qui finit pas toujours bien 😈.",
+      "Bon pour t'embrasser jusqu'à perdre haleine.",
+      "Bon pour un remake perso de 50 nuances de toi."
+    ]
+  },
+  "bons-rigolos": {
+    bons: [
+      "Bon pour une journée où tu m'appelles 'ma majesté'.",
+      "Bon pour une story insta à deux (et tu choisis le son).",
+      "Bon pour une bataille d'oreillers.",
+      "Bon pour que je danse n'importe comment juste pour te faire rire.",
+      "Bon pour une soirée pyjama avec snacks et fous rires.",
+      "Bon pour une imitation débile à ma demande.",
+      "Bon pour un selfie moche obligatoire à deux.",
+      "Bon pour une bataille de chatouille.",
+      "Bon pour une blague du jour (même si elle est nulle).",
+      "Bon pour une partie de cache-cache dans la maison.",
+      "Bon pour un moment 'karaoké catastrophique'.",
+      "Bon pour un concours de grimaces.",
+      "Bon pour une journée sans prise de tête.",
+      "Bon pour me maquiller (mais pas te moquer 😅).",
+      "Bon pour une journée 'tout est permis'.",
+      "Bon pour une photo ridicule ensemble.",
+      "Bon pour m'entendre dire 't'avais raison'.",
+      "Bon pour une phrase débile que tu veux que je dise en public.",
+      "Bon pour une journée à faire n'importe quoi.",
+      "Bon pour une surprise complètement WTF."
+    ]
+  },
+  "bons-detente": {
+    bons: [
+      "Bon pour un massage relaxant complet.",
+      "Bon pour une sieste collés sans réveil.",
+      "Bon pour un bain de pied avec bougies et musique douce.",
+      "Bon pour une journée sans corvée.",
+      "Bon pour une soirée calme, plaid et chocolat chaud.",
+      "Bon pour un soin du visage maison.",
+      "Bon pour un après-midi sans stress, sans téléphone.",
+      "Bon pour une journée 'no obligations'.",
+      "Bon pour une balade tranquille au coucher du soleil.",
+      "Bon pour un câlin-thérapie.",
+      "Bon pour un petit déjeuner zen au lit.",
+      "Bon pour une soirée à lire ou rien faire ensemble.",
+      "Bon pour un massage des pieds (même si j'aime pas ça 😩).",
+      "Bon pour te faire le repas.",
+      "Bon pour un moment silence et détente totale.",
+      "Bon pour te laisser la télécommande (même pendant ton émission chelou).",
+      "Bon pour une journée 'chill total'.",
+      "Bon pour une playlist détente faite par moi.",
+      "Bon pour une promenade sans but, juste pour respirer.",
+      "Bon pour une nuit sans réveil, sans stress, juste nous."
+    ]
+  }
+};
+
+// Fonctions pour le localStorage
+function getCheckedBons(pageId) {
+  const saved = localStorage.getItem(`checkedBons-${pageId}`);
+  return saved ? JSON.parse(saved) : [];
+}
+
+function saveCheckedBons(pageId, checkedBons) {
+  localStorage.setItem(`checkedBons-${pageId}`, JSON.stringify(checkedBons));
+}
+
+function updateCheckedBon(pageId, index, isChecked) {
+  const checkedBons = getCheckedBons(pageId);
+  if (isChecked) {
+    if (!checkedBons.includes(index)) {
+      checkedBons.push(index);
+    }
+  } else {
+    const pos = checkedBons.indexOf(index);
+    if (pos > -1) {
+      checkedBons.splice(pos, 1);
+    }
+  }
+  saveCheckedBons(pageId, checkedBons);
+}
+
+// Initialisation du carrousel
+const track = document.getElementById('track');
+const items = Array.from(track.children);
+const originalCount = items.length / 2;
+let startX = 0;
+let currentTranslate = 0;
+let prevTranslate = 0;
+let isDragging = false;
+
+const itemWidth = items[0].offsetWidth + 20;
+const setPosition = () => track.style.transform = `translateX(${currentTranslate}px)`;
+
+const touchStart = (e) => {
+  startX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+  isDragging = true;
+  track.style.transition = 'none';
+};
+const touchMove = (e) => {
+  if(!isDragging) return;
+  const x = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+  const delta = x - startX;
+  currentTranslate = prevTranslate + delta;
+  setPosition();
+};
+const touchEnd = () => {
+  if(!isDragging) return;
+  isDragging = false;
+  track.style.transition = 'transform 0.3s ease';
+
+  const slides = Math.round(-currentTranslate / itemWidth);
+  currentTranslate = -slides * itemWidth;
+  prevTranslate = currentTranslate;
+  setPosition();
+
+  if(slides >= originalCount){
+    setTimeout(() => {
+      track.style.transition = 'none';
+      currentTranslate = -(slides - originalCount) * itemWidth;
+      prevTranslate = currentTranslate;
+      setPosition();
+    }, 310);
+  }
+  if(slides < 0){
+    setTimeout(() => {
+      track.style.transition = 'none';
+      currentTranslate = -(slides + originalCount) * itemWidth;
+      prevTranslate = currentTranslate;
+      setPosition();
+    }, 310);
+  }
+};
+
+['mousedown','touchstart'].forEach(evt => track.addEventListener(evt, touchStart));
+['mousemove','touchmove'].forEach(evt => track.addEventListener(evt, touchMove));
+['mouseup','mouseleave','touchend'].forEach(evt => track.addEventListener(evt, touchEnd));
+
+window.addEventListener('resize', () => {
+  const newItemWidth = items[0].offsetWidth + 20;
+  currentTranslate = Math.round(currentTranslate / itemWidth) * newItemWidth;
+  prevTranslate = currentTranslate;
+  track.style.transition = 'none';
+  setPosition();
+});
+
+// Navigation entre les pages
+document.querySelectorAll('.carousel-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const pageId = item.getAttribute('data-page');
+    showPage(pageId);
+  });
+});
+
+document.querySelectorAll('.back-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const pageId = btn.getAttribute('data-back');
+    showPage(pageId);
+  });
+});
+
+function showPage(pageId) {
+  // Cacher toutes les pages
+  document.querySelectorAll('.page-bons, #accueil').forEach(page => {
+    page.style.display = 'none';
+  });
+  
+  // Afficher la page demandée
+  if (pageId === 'accueil') {
+    document.getElementById('accueil').style.display = 'flex';
+  } else {
+    document.getElementById(pageId).style.display = 'flex';
+    
+    // Initialiser les bons si c'est la première fois qu'on visite cette page
+    if (!bonsData[pageId].initialized) {
+      initializeBons(pageId);
+      bonsData[pageId].initialized = true;
+    }
+  }
+}
+
+// Initialisation des listes de bons
+function initializeBons(pageId) {
+  const ul = document.getElementById(`bonsList-${pageId.split('-')[1]}`);
+  const counter = document.getElementById(`counter-${pageId.split('-')[1]}`);
+  const secret = document.getElementById(`secretMessage-${pageId.split('-')[1]}`);
+  
+  // Récupérer les bons cochés depuis le localStorage
+  const checkedBons = getCheckedBons(pageId);
+  let used = checkedBons.length;
+  const total = bonsData[pageId].bons.length;
+  
+  // Vérifier si tous les bons sont cochés
+  if (used === total) {
+    secret.style.display = 'block';
+  }
+  
+  bonsData[pageId].bons.forEach((bon, index) => {
+    const li = document.createElement('li');
+    const checkbox = document.createElement('input');
+    const label = document.createElement('label');
+    
+    checkbox.type = 'checkbox';
+    checkbox.id = `${pageId}-bon-${index}`;
+    label.htmlFor = checkbox.id;
+    label.textContent = bon;
+    
+    // Cocher la case si elle était cochée précédemment
+    if (checkedBons.includes(index)) {
+      checkbox.checked = true;
+      label.classList.add('used');
+      checkbox.disabled = true;
+    }
+    
+    checkbox.addEventListener('change', function() {
+      if (this.checked) {
+        if (confirm('Veux-tu vraiment valider ce bon ?')) {
+          label.classList.add('used');
+          this.disabled = true;
+          used++;
+          updateCounter();
+          createHeartAnimation(this);
+          updateCheckedBon(pageId, index, true);
+          if (used === total) secret.style.display = 'block';
+        } else {
+          this.checked = false;
+        }
+      }
+    });
+    
+    li.appendChild(checkbox);
+    li.appendChild(label);
+    ul.appendChild(li);
+  });
+  
+  function updateCounter() {
+    counter.textContent = `${used} / ${total} bons utilisés`;
+  }
+  updateCounter();
+}
+
+function createHeartAnimation(element) {
+  const heart = document.createElement('div');
+  heart.classList.add('heart');
+  heart.textContent = '💖';
+  const rect = element.getBoundingClientRect();
+  heart.style.left = rect.left + 'px';
+  heart.style.top = rect.top + 'px';
+  document.body.appendChild(heart);
+  setTimeout(() => heart.remove(), 1500);
+}
+</script>
+
+</body>
+</html>
