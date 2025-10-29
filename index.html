@@ -702,6 +702,20 @@ function createHeartAnimation(element) {
   document.body.appendChild(heart);
   setTimeout(() => heart.remove(), 1500);
 }
+
+// Empêche le carrousel de bloquer le scroll vertical
+document.querySelector('.carousel').addEventListener('wheel', (e) => {
+  // Si le défilement est vertical (deltaY != 0)
+  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    e.preventDefault(); // empêche le comportement par défaut du carrousel
+    window.scrollBy({
+      top: e.deltaY,
+      left: 0,
+      behavior: 'smooth'
+    });
+  }
+}, { passive: false });
+
 </script>
 
 </body>
