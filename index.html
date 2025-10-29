@@ -7,9 +7,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 /* Styles communs */
-html, body { 
-  margin:0; padding:0; font-family:'Inter',sans-serif; 
-  background:#111; color:#fff; overflow: auto; height:100vh;
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background: #111;
+  color: #fff;
+  overflow-x: hidden; /* empêche de scroller sur les côtés */
+  overflow-y: auto; /* permet le scroll vertical */
+  height: auto; /* Laisse la page grandir naturellement */
+  min-height: 100vh; /* pour garder la hauteur plein écran si peu de contenu */
 }
 
 h1 {
@@ -32,7 +39,7 @@ h1 {
   align-items:center; 
   justify-content:flex-start; 
   padding-top:40px;
-  height:100vh;
+  min-height: 100vh;
   width:100vw;
 }
 
