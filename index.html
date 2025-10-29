@@ -7,16 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 /* Styles communs */
-html, body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Inter', sans-serif;
-  background: #111;
-  color: #fff;
-  overflow-x: hidden; /* empêche de scroller sur les côtés */
-  overflow-y: auto; /* permet le scroll vertical */
-  height: auto; /* Laisse la page grandir naturellement */
-  min-height: 100vh; /* pour garder la hauteur plein écran si peu de contenu */
+html, body { 
+  margin:0; padding:0; font-family:'Inter',sans-serif; 
+  background:#111; color:#fff; overflow:hidden; height:100vh;
 }
 
 h1 {
@@ -39,7 +32,7 @@ h1 {
   align-items:center; 
   justify-content:flex-start; 
   padding-top:40px;
-  min-height: 100vh;
+  height:100vh;
   width:100vw;
 }
 
@@ -336,7 +329,6 @@ label {
 <div id="accueil">
   <h1>Carnet de Bons</h1>
   <div class="subtitle">Valable 1 an à partir d'aujourd'hui 💌</div>
-<div style="height: 150vh;"></div>
 
   <div class="carousel">
     <div class="carousel-track" id="track">
@@ -613,36 +605,18 @@ function showPage(pageId) {
   }
 }
 
-// Fonctions pour le localStorage
-function getSavedState(pageId) {
-  const saved = localStorage.getItem(`bons-${pageId}`);
-  return saved ? JSON.parse(saved) : {};
-}
-
-function saveState(pageId, index, isChecked) {
-  const currentState = getSavedState(pageId);
-  currentState[index] = isChecked;
-  localStorage.setItem(`bons-${pageId}`, JSON.stringify(currentState));
-}
-
-function getUsedCount(pageId) {
-  const state = getSavedState(pageId);
-  return Object.values(state).filter(Boolean).length;
-}
-
-// Initialisation des listes de bons
+// Initialisation des listes de bons avec localStorage
 function initializeBons(pageId) {
   const ul = document.getElementById(`bonsList-${pageId.split('-')[1]}`);
   const counter = document.getElementById(`counter-${pageId.split('-')[1]}`);
   const secret = document.getElementById(`secretMessage-${pageId.split('-')[1]}`);
   
+  let used = 0;
   const total = bonsData[pageId].bons.length;
-  const savedState = getSavedState(pageId);
-  let used = getUsedCount(pageId);
-  
-  // Vider la liste avant de la remplir
-  ul.innerHTML = '';
-  
+
+  // Charger l'état depuis le localStorage
+  const storedState = JSON.parse(localStorage.getItem(pageId)) || {};
+
   bonsData[pageId].bons.forEach((bon, index) => {
     const li = document.createElement('li');
     const checkbox = document.createElement('input');
@@ -652,23 +626,28 @@ function initializeBons(pageId) {
     checkbox.id = `${pageId}-bon-${index}`;
     label.htmlFor = checkbox.id;
     label.textContent = bon;
-    
-    // Restaurer l'état sauvegardé
-    if (savedState[index]) {
+
+    // Restaurer l'état si sauvegardé
+    if (storedState[index]) {
       checkbox.checked = true;
-      label.classList.add('used');
       checkbox.disabled = true;
+      label.classList.add('used');
+      used++;
     }
-    
+
     checkbox.addEventListener('change', function() {
       if (this.checked) {
         if (confirm('Veux-tu vraiment valider ce bon ?')) {
           label.classList.add('used');
           this.disabled = true;
           used++;
-          saveState(pageId, index, true);
           updateCounter();
           createHeartAnimation(this);
+          
+          // Sauvegarder dans localStorage
+          storedState[index] = true;
+          localStorage.setItem(pageId, JSON.stringify(storedState));
+
           if (used === total) secret.style.display = 'block';
         } else {
           this.checked = false;
@@ -684,38 +663,11 @@ function initializeBons(pageId) {
   function updateCounter() {
     counter.textContent = `${used} / ${total} bons utilisés`;
   }
-  
   updateCounter();
-  
-  // Afficher le message secret si tous les bons sont utilisés
-  if (used === total) {
-    secret.style.display = 'block';
-  }
-}
 
-function createHeartAnimation(element) {
-  const heart = document.createElement('div');
-  heart.classList.add('heart');
-  heart.textContent = '💖';
-  const rect = element.getBoundingClientRect();
-  heart.style.left = rect.left + 'px';
-  heart.style.top = rect.top + 'px';
-  document.body.appendChild(heart);
-  setTimeout(() => heart.remove(), 1500);
+  // Afficher le message secret si tous les bons sont déjà cochés
+  if (used === total) secret.style.display = 'block';
 }
-
-// Empêche le carrousel de bloquer le scroll vertical
-document.querySelector('.carousel').addEventListener('wheel', (e) => {
-  // Si le défilement est vertical (deltaY != 0)
-  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-    e.preventDefault(); // empêche le comportement par défaut du carrousel
-    window.scrollBy({
-      top: e.deltaY,
-      left: 0,
-      behavior: 'smooth'
-    });
-  }
-}, { passive: false });
 
 </script>
 
