@@ -506,31 +506,6 @@ const bonsData = {
   }
 };
 
-// Fonctions pour le localStorage
-function getCheckedBons(pageId) {
-  const saved = localStorage.getItem(`checkedBons-${pageId}`);
-  return saved ? JSON.parse(saved) : [];
-}
-
-function saveCheckedBons(pageId, checkedBons) {
-  localStorage.setItem(`checkedBons-${pageId}`, JSON.stringify(checkedBons));
-}
-
-function updateCheckedBon(pageId, index, isChecked) {
-  const checkedBons = getCheckedBons(pageId);
-  if (isChecked) {
-    if (!checkedBons.includes(index)) {
-      checkedBons.push(index);
-    }
-  } else {
-    const pos = checkedBons.indexOf(index);
-    if (pos > -1) {
-      checkedBons.splice(pos, 1);
-    }
-  }
-  saveCheckedBons(pageId, checkedBons);
-}
-
 // Initialisation du carrousel
 const track = document.getElementById('track');
 const items = Array.from(track.children);
@@ -630,21 +605,35 @@ function showPage(pageId) {
   }
 }
 
+// Fonctions pour le localStorage
+function getSavedState(pageId) {
+  const saved = localStorage.getItem(`bons-${pageId}`);
+  return saved ? JSON.parse(saved) : {};
+}
+
+function saveState(pageId, index, isChecked) {
+  const currentState = getSavedState(pageId);
+  currentState[index] = isChecked;
+  localStorage.setItem(`bons-${pageId}`, JSON.stringify(currentState));
+}
+
+function getUsedCount(pageId) {
+  const state = getSavedState(pageId);
+  return Object.values(state).filter(Boolean).length;
+}
+
 // Initialisation des listes de bons
 function initializeBons(pageId) {
   const ul = document.getElementById(`bonsList-${pageId.split('-')[1]}`);
   const counter = document.getElementById(`counter-${pageId.split('-')[1]}`);
   const secret = document.getElementById(`secretMessage-${pageId.split('-')[1]}`);
   
-  // Récupérer les bons cochés depuis le localStorage
-  const checkedBons = getCheckedBons(pageId);
-  let used = checkedBons.length;
   const total = bonsData[pageId].bons.length;
+  const savedState = getSavedState(pageId);
+  let used = getUsedCount(pageId);
   
-  // Vérifier si tous les bons sont cochés
-  if (used === total) {
-    secret.style.display = 'block';
-  }
+  // Vider la liste avant de la remplir
+  ul.innerHTML = '';
   
   bonsData[pageId].bons.forEach((bon, index) => {
     const li = document.createElement('li');
@@ -656,8 +645,8 @@ function initializeBons(pageId) {
     label.htmlFor = checkbox.id;
     label.textContent = bon;
     
-    // Cocher la case si elle était cochée précédemment
-    if (checkedBons.includes(index)) {
+    // Restaurer l'état sauvegardé
+    if (savedState[index]) {
       checkbox.checked = true;
       label.classList.add('used');
       checkbox.disabled = true;
@@ -669,9 +658,9 @@ function initializeBons(pageId) {
           label.classList.add('used');
           this.disabled = true;
           used++;
+          saveState(pageId, index, true);
           updateCounter();
           createHeartAnimation(this);
-          updateCheckedBon(pageId, index, true);
           if (used === total) secret.style.display = 'block';
         } else {
           this.checked = false;
@@ -687,7 +676,13 @@ function initializeBons(pageId) {
   function updateCounter() {
     counter.textContent = `${used} / ${total} bons utilisés`;
   }
+  
   updateCounter();
+  
+  // Afficher le message secret si tous les bons sont utilisés
+  if (used === total) {
+    secret.style.display = 'block';
+  }
 }
 
 function createHeartAnimation(element) {
